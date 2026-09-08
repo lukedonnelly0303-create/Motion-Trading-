@@ -14,6 +14,7 @@
     "@libsql/client": "0.18.0",
     "bcryptjs": "2.4.3",
     "drizzle-orm": "0.45.2",
+    "metaapi.cloud-sdk": "^29.3.3",
     "next": "14.2.35",
     "next-auth": "4.24.15",
     "react": "18.3.1",

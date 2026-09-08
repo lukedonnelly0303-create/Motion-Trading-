@@ -145,11 +145,24 @@ class RemoteProvider implements TradingProvider {
 }
 
 // Set PROVIDER_MODE=live in .env once you've contracted a real white-label
-// provider and filled in PROVIDER_API_BASE_URL / PROVIDER_API_KEY. Anything
-// else (including unset) keeps the app on the deterministic mock.
+// provider and filled in PROVIDER_API_BASE_URL / PROVIDER_API_KEY.
+// Set PROVIDER_MODE=metaapi to use a single real MetaApi/MT4 demo account
+// instead (see metaApiProvider.ts for what that does and doesn't cover).
+// Anything else (including unset) keeps the app on the deterministic mock.
 const PROVIDER_MODE: string = process.env.PROVIDER_MODE ?? "mock";
 
-export const tradingProvider: TradingProvider = PROVIDER_MODE === "live" ? new RemoteProvider() : new MockProvider();
+function buildProvider(): TradingProvider {
+  if (PROVIDER_MODE === "live") return new RemoteProvider();
+  if (PROVIDER_MODE === "metaapi") {
+    // Lazy require so the metaapi.cloud-sdk dependency (and its network
+    // calls) are only ever touched when this mode is actually selected.
+    const { MetaApiProvider } = require("@/lib/metaApiProvider");
+    return new MetaApiProvider();
+  }
+  return new MockProvider();
+}
+
+export const tradingProvider: TradingProvider = buildProvider();
 
 // ---- small deterministic-math helpers, no dependency needed ----
 function hashToInt(input: string): number {
