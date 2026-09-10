@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@libsql/client": "0.18.0",
+    "@vercel/blob": "^2.8.0",
     "bcryptjs": "2.4.3",
     "drizzle-orm": "0.45.2",
     "metaapi.cloud-sdk": "^29.3.3",
