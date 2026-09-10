@@ -55,7 +55,15 @@ export default async function AdminPage() {
               {kycList.map((d) => (
                 <tr key={d.id}>
                   <td>{d.user.email}</td>
-                  <td className="mono" style={{ fontSize: 12 }}>{d.filename}</td>
+                  <td className="mono" style={{ fontSize: 12 }}>
+                    {d.blobPath ? (
+                      <a href={`/api/admin/kyc/${d.id}/file`} target="_blank" rel="noreferrer">
+                        {d.filename}
+                      </a>
+                    ) : (
+                      d.filename
+                    )}
+                  </td>
                   <td>{d.uploadedAt.toLocaleDateString()}</td>
                   <td style={{ display: "flex", gap: 8 }}>
                     <form action={approveKyc.bind(null, d.id)}>
