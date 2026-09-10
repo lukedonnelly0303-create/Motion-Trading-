@@ -84,6 +84,11 @@ export const kycDocuments = sqliteTable("kyc_documents", {
     .notNull()
     .references(() => users.id),
   filename: text("filename").notNull(),
+  // Pathname of the file inside the private Vercel Blob store (e.g.
+  // "kyc/<id>-<ts>-name.pdf"). Not a public URL — private blobs require an
+  // authenticated fetch (see /api/admin/kyc/[id]/file). Nullable for rows
+  // created before this column existed (pre-Blob local-disk era).
+  blobPath: text("blob_path"),
   status: text("status", { enum: ["PENDING", "VERIFIED", "REJECTED"] })
     .notNull()
     .default("PENDING"),
