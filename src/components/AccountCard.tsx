@@ -96,6 +96,14 @@ export default function AccountCard({ account }: { account: AccountProps }) {
         </div>
       )}
 
+      {(account.status === "PASSED" || account.status === "FUNDED") && (
+        <div style={{ marginTop: 18, paddingTop: 16, borderTop: "1px solid var(--line)" }}>
+          <a className="btn btn-ghost" href={`/api/accounts/${account.id}/certificate`} target="_blank" rel="noreferrer">
+            Download certificate
+          </a>
+        </div>
+      )}
+
       {account.status === "FUNDED" && (
         <div style={{ marginTop: 18, paddingTop: 16, borderTop: "1px solid var(--line)" }}>
           <button className="btn btn-primary" onClick={requestPayout} disabled={requesting}>
