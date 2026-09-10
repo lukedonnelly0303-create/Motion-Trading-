@@ -24,14 +24,24 @@ export default function KycPanel({ kycStatus, docs }: { kycStatus: string; docs:
     setMessage(null);
     const form = new FormData();
     form.append("file", file);
-    const res = await fetch("/api/kyc/upload", { method: "POST", body: form });
-    const data = await res.json();
+    let res: Response;
+    let data: { id?: string; filename?: string; error?: string } = {};
+    try {
+      res = await fetch("/api/kyc/upload", { method: "POST", body: form });
+      data = await res.json().catch(() => ({}));
+    } catch {
+      setUploading(false);
+      setMessage("Upload failed — network error. Try again.");
+      return;
+    }
     setUploading(false);
     if (!res.ok) {
       setMessage(data.error ?? "Upload failed");
       return;
     }
-    setLocalDocs((prev) => [{ id: data.id, filename: data.filename, status: "PENDING" }, ...prev]);
+    if (data.id && data.filename) {
+      setLocalDocs((prev) => [{ id: data.id!, filename: data.filename!, status: "PENDING" }, ...prev]);
+    }
     setMessage("Uploaded — pending review.");
     if (fileRef.current) fileRef.current.value = "";
   }
