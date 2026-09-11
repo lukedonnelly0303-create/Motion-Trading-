@@ -29,6 +29,10 @@ export default async function DashboardPage() {
   if (!user) redirect("/login");
 
   const pendingOrder = user.orders.find((o) => o.status === "PENDING");
+  // Paid, but the account is being held back until KYC is verified (see
+  // fulfillOrder in the Stripe webhook + provisionPendingAccountsForVerifiedUser).
+  const accountOrderIds = new Set(user.accounts.map((a) => a.orderId));
+  const awaitingKycOrder = user.orders.find((o) => o.status === "PAID" && !accountOrderIds.has(o.id));
 
   return (
     <main className="shell" style={{ padding: "44px 24px 90px" }}>
@@ -40,6 +44,15 @@ export default async function DashboardPage() {
           <p style={{ fontSize: 13.5 }}>
             You have a pending order for {formatUsd(pendingOrder.priceCents)} — it'll appear here as an account once payment
             completes.
+          </p>
+        </div>
+      )}
+
+      {awaitingKycOrder && (
+        <div className="card" style={{ marginTop: 20, borderColor: "rgba(199,134,47,0.35)", background: "var(--gold-soft)" }}>
+          <p style={{ fontSize: 13.5 }}>
+            Payment received for {formatUsd(awaitingKycOrder.priceCents)} — your evaluation account will be created as soon
+            as your identity verification below is approved.
           </p>
         </div>
       )}
