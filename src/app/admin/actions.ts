@@ -7,6 +7,7 @@ import { authOptions } from "@/lib/auth";
 import { db } from "@/db";
 import { accounts, kycDocuments, payoutRequests, users } from "@/db/schema";
 import { tradingProvider } from "@/lib/propTechProvider";
+import { provisionPendingAccountsForVerifiedUser } from "@/lib/provisioning";
 
 async function requireAdmin() {
   const session = await getServerSession(authOptions);
@@ -22,7 +23,13 @@ export async function approveKyc(docId: string) {
   if (!doc) return;
   await db.update(kycDocuments).set({ status: "VERIFIED" }).where(eq(kycDocuments.id, docId));
   await db.update(users).set({ kycStatus: "VERIFIED" }).where(eq(users.id, doc.userId));
+  // A trader can pay before their identity is verified — we hold their
+  // account back until then (see fulfillOrder in the Stripe webhook). Now
+  // that they're verified, provision an account for any order that was left
+  // waiting on this.
+  await provisionPendingAccountsForVerifiedUser(doc.userId);
   revalidatePath("/admin");
+  revalidatePath("/dashboard");
 }
 
 export async function rejectKyc(docId: string) {

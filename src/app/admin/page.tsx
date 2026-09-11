@@ -4,7 +4,7 @@ import { db } from "@/db";
 // This page reads live back-office data (pending KYC, payouts, accounts) on
 // every load — it must never be statically cached at build time.
 export const dynamic = "force-dynamic";
-import { users, accounts, payoutRequests, kycDocuments } from "@/db/schema";
+import { users, accounts, orders, payoutRequests, kycDocuments } from "@/db/schema";
 import { formatUsd } from "@/lib/pricing";
 import {
   approveKyc,
@@ -18,7 +18,7 @@ import {
 } from "./actions";
 
 export default async function AdminPage() {
-  const [userList, accountList, payoutList, kycList] = await Promise.all([
+  const [userList, accountList, payoutList, kycList, paidOrders, provisionedOrderIds] = await Promise.all([
     db.query.users.findMany({ orderBy: desc(users.createdAt), limit: 50 }),
     db.query.accounts.findMany({ orderBy: desc(accounts.createdAt), limit: 50, with: { user: true } }),
     db.query.payoutRequests.findMany({
@@ -31,12 +31,48 @@ export default async function AdminPage() {
       orderBy: desc(kycDocuments.uploadedAt),
       with: { user: true },
     }),
+    db.query.orders.findMany({ where: eq(orders.status, "PAID"), orderBy: desc(orders.paidAt), with: { user: true } }),
+    db.select({ orderId: accounts.orderId }).from(accounts),
   ]);
+
+  // Paid, but no account yet — held back until this trader's identity is
+  // verified (see fulfillOrder in the Stripe webhook + approveKyc).
+  const provisionedIds = new Set(provisionedOrderIds.map((o) => o.orderId));
+  const awaitingKycOrders = paidOrders.filter((o) => !provisionedIds.has(o.id));
 
   return (
     <main className="shell" style={{ padding: "44px 24px 90px" }}>
       <span className="badge">Back office</span>
       <h1 style={{ fontSize: 26, marginTop: 12 }}>Admin</h1>
+
+      <Section title={`Paid orders awaiting KYC (${awaitingKycOrders.length})`}>
+        {awaitingKycOrders.length === 0 ? (
+          <Empty text="No paid orders waiting on identity verification." />
+        ) : (
+          <table>
+            <thead>
+              <tr>
+                <th>Trader</th>
+                <th>Order</th>
+                <th>Amount</th>
+                <th>Paid</th>
+              </tr>
+            </thead>
+            <tbody>
+              {awaitingKycOrders.map((o) => (
+                <tr key={o.id}>
+                  <td>{o.user.email}</td>
+                  <td className="mono" style={{ fontSize: 12 }}>
+                    {o.evaluationType} · ${o.accountSize / 1000}K
+                  </td>
+                  <td className="mono">{formatUsd(o.priceCents)}</td>
+                  <td>{o.paidAt?.toLocaleDateString() ?? "—"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </Section>
 
       <Section title={`Pending KYC (${kycList.length})`}>
         {kycList.length === 0 ? (
