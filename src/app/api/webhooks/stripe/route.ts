@@ -2,9 +2,9 @@ import { NextResponse } from "next/server";
 import type Stripe from "stripe";
 import { eq } from "drizzle-orm";
 import { getStripe } from "@/lib/stripe";
-import { db, newId } from "@/db";
-import { orders, accounts } from "@/db/schema";
-import { tradingProvider } from "@/lib/propTechProvider";
+import { db } from "@/db";
+import { orders } from "@/db/schema";
+import { isKycVerified, provisionAccountForOrder } from "@/lib/provisioning";
 
 // Stripe needs the raw request body to verify the webhook signature.
 export const runtime = "nodejs";
@@ -38,10 +38,14 @@ export async function POST(req: Request) {
 }
 
 /**
- * Marks the order paid and provisions the evaluation account with the
- * trading-engine provider (mock today, a real white-label vendor once
- * PROVIDER_MODE is flipped in lib/propTechProvider.ts). Idempotent — safe if
- * Stripe retries the webhook.
+ * Marks the order paid. If the trader's identity is already verified, this
+ * also immediately provisions the evaluation account with the trading-engine
+ * provider (mock today, a real white-label vendor once PROVIDER_MODE is
+ * flipped in lib/propTechProvider.ts). If KYC isn't verified yet, the order
+ * is left paid-but-unprovisioned — we don't hand out a trading account until
+ * identity is confirmed. provisionPendingAccountsForVerifiedUser (called from
+ * the admin KYC-approve action) picks up any orders left in that state once
+ * verification completes. Idempotent — safe if Stripe retries the webhook.
  */
 async function fulfillOrder(orderId: string) {
   const [order] = await db.select().from(orders).where(eq(orders.id, orderId)).limit(1);
@@ -49,26 +53,7 @@ async function fulfillOrder(orderId: string) {
 
   await db.update(orders).set({ status: "PAID", paidAt: new Date() }).where(eq(orders.id, orderId));
 
-  const accountId = newId();
-  await db.insert(accounts).values({
-    id: accountId,
-    userId: order.userId,
-    orderId: order.id,
-    evaluationType: order.evaluationType,
-    accountSize: order.accountSize,
-    phase: "PHASE_1",
-    status: "ACTIVE",
-    profitSplitPct: 80,
-  });
-
-  const provisioned = await tradingProvider.provisionAccount({
-    accountId,
-    evaluationType: order.evaluationType,
-    accountSize: order.accountSize,
-  });
-
-  await db
-    .update(accounts)
-    .set({ providerAccountId: provisioned.providerAccountId, providerLogin: provisioned.providerLogin })
-    .where(eq(accounts.id, accountId));
+  if (await isKycVerified(order.userId)) {
+    await provisionAccountForOrder(order);
+  }
 }
