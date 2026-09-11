@@ -9,8 +9,15 @@ export default function NavBar() {
   return (
     <header style={{ borderBottom: "1px solid var(--line)", position: "sticky", top: 0, background: "rgba(10,22,19,0.9)", backdropFilter: "blur(8px)", zIndex: 20 }}>
       <div className="shell" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 24px" }}>
-        <Link href="/" style={{ fontFamily: "Archivo, sans-serif", fontWeight: 900, fontSize: 17, textDecoration: "none", color: "var(--ink)" }}>
-          MOTION<span style={{ color: "var(--accent)" }}>·</span>TRADING
+        <Link href="/" className="brand">
+          <span className="logo-mark">
+            <svg viewBox="0 0 30 30" fill="none">
+              <path d="M6 20 L12 13 L16 17 L24 8" stroke="#04160F" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </span>
+          <span className="brand-word">
+            MOTION<span>·</span>TRADING
+          </span>
         </Link>
         <nav style={{ display: "flex", gap: 18, alignItems: "center", fontSize: 14 }}>
           <Link href="/pricing" style={{ color: "var(--ink-dim)", textDecoration: "none" }}>
