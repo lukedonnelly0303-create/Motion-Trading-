@@ -36,7 +36,8 @@ export default async function DashboardPage() {
 
   return (
     <main className="shell" style={{ padding: "44px 24px 90px" }}>
-      <h1 style={{ fontSize: 26 }}>Welcome back{user.name ? `, ${user.name.split(" ")[0]}` : ""}</h1>
+      <span className="eyebrow">Your dashboard</span>
+      <h1 style={{ fontSize: 26, marginTop: 10 }}>Welcome back{user.name ? `, ${user.name.split(" ")[0]}` : ""}</h1>
       <p style={{ color: "var(--ink-dim)", marginTop: 6 }}>{user.email}</p>
 
       {pendingOrder && (
