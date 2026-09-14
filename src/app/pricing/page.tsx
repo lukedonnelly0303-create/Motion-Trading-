@@ -101,6 +101,56 @@ export default function PricingPage() {
           Runs Stripe in test mode until real keys are set in <span className="mono">.env</span>.
         </p>
       </div>
+
+      <section style={{ marginTop: 56, maxWidth: 640 }}>
+        <span className="eyebrow">1-Step vs 2-Step</span>
+        <h2 style={{ fontSize: "clamp(20px,2.4vw,26px)", marginTop: 12, marginBottom: 20 }}>
+          Same account sizes, same payouts — pick your pace.
+        </h2>
+        <div className="card compare">
+          <table>
+            <thead>
+              <tr>
+                <th>Evaluation</th>
+                <th>1-Step</th>
+                <th>2-Step</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Phases</td>
+                <td className="mono">1</td>
+                <td className="mono">2</td>
+              </tr>
+              <tr>
+                <td>Profit target</td>
+                <td className="mono">{RULES.ONE_STEP.profitTargetPct.join(" → ")}%</td>
+                <td className="mono">{RULES.TWO_STEP.profitTargetPct.join(" → ")}%</td>
+              </tr>
+              <tr>
+                <td>Daily drawdown</td>
+                <td className="mono">{RULES.ONE_STEP.dailyDrawdownPct}%</td>
+                <td className="mono">{RULES.TWO_STEP.dailyDrawdownPct}%</td>
+              </tr>
+              <tr>
+                <td>Max drawdown</td>
+                <td className="mono">{RULES.ONE_STEP.maxDrawdownPct}%</td>
+                <td className="mono">{RULES.TWO_STEP.maxDrawdownPct}%</td>
+              </tr>
+              <tr>
+                <td>Profit split on payout</td>
+                <td className="compare-highlight">Up to 90%</td>
+                <td className="compare-highlight">Up to 90%</td>
+              </tr>
+              <tr>
+                <td>Fee refunded</td>
+                <td className="compare-highlight">First payout</td>
+                <td className="compare-highlight">First payout</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
     </main>
   );
 }
