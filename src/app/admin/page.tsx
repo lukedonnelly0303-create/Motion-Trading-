@@ -174,7 +174,7 @@ export default async function AdminPage() {
             {accountList.map((a) => (
               <tr key={a.id}>
                 <td>{a.user.email}</td>
-                <td className="mono" style={{ fontSize: 12 }}>{a.evaluationType} · ${a.accountSize / 1000}K</td>
+                <td className="mono" style={{ fontSize: 12, whiteSpace: "nowrap" }}>{a.evaluationType === "TWO_STEP" ? "2-Step" : "1-Step"} · ${a.accountSize / 1000}K</td>
                 <td>{a.phase}</td>
                 <td>
                   <span
@@ -183,7 +183,8 @@ export default async function AdminPage() {
                     {a.status}
                   </span>
                 </td>
-                <td style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <td>
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
                   {a.status === "PASSED" && (
                     <form action={advanceAccount.bind(null, a.id)}>
                       <button className="btn btn-primary" style={{ padding: "6px 14px", fontSize: 13 }}>
@@ -199,6 +200,7 @@ export default async function AdminPage() {
                   <form action={resetAccount.bind(null, a.id)}>
                     <button className="btn btn-ghost" style={{ padding: "6px 14px", fontSize: 13 }}>Reset</button>
                   </form>
+                  </div>
                 </td>
               </tr>
             ))}
