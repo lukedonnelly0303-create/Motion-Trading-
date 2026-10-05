@@ -2,6 +2,11 @@
 
 import { useRef, useState } from "react";
 
+// Uploads are stored as "<userId>-<timestamp>-<original name>"; show just the original name.
+function displayName(stored: string) {
+  return stored.replace(/^[0-9a-f-]{36}-\d{10,}-/i, "");
+}
+
 interface Doc {
   id: string;
   filename: string;
@@ -72,7 +77,7 @@ export default function KycPanel({ kycStatus, docs }: { kycStatus: string; docs:
           <tbody>
             {localDocs.map((d) => (
               <tr key={d.id}>
-                <td className="mono" style={{ fontSize: 12.5 }}>{d.filename}</td>
+                <td className="mono" style={{ fontSize: 12.5 }}>{displayName(d.filename)}</td>
                 <td>
                   <span className={`badge ${d.status === "VERIFIED" ? "ok" : d.status === "REJECTED" ? "bad" : "warn"}`}>{d.status}</span>
                 </td>
