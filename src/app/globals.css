@@ -478,3 +478,25 @@ th {
   color: var(--accent);
   font-weight: 700;
 }
+/* ---------- native file picker, themed ---------- */
+input[type="file"] {
+  padding: 8px 10px;
+  color: var(--ink-dim);
+  font-size: 13px;
+}
+input[type="file"]::file-selector-button {
+  margin-right: 12px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--line-strong);
+  background: var(--surface-2);
+  color: var(--ink);
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+}
+input[type="file"]::file-selector-button:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
