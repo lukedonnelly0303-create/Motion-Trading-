@@ -62,7 +62,25 @@ export async function advanceAccount(accountId: string) {
   if (account.evaluationType === "TWO_STEP" && account.phase === "PHASE_1") {
     await db.update(accounts).set({ phase: "PHASE_2", status: "ACTIVE" }).where(eq(accounts.id, accountId));
   } else {
-    await db.update(accounts).set({ phase: "FUNDED", status: "FUNDED", fundedAt: new Date() }).where(eq(accounts.id, accountId));
+    // A funded account is a fresh account: new login from the provider,
+    // full starting balance, and metrics measured from today (see
+    // metricsStartDate), so evaluation profit can't be paid out.
+    const provisioned = await tradingProvider.provisionAccount({
+      accountId,
+      evaluationType: account.evaluationType,
+      accountSize: account.accountSize,
+      stage: "FUNDED",
+    });
+    await db
+      .update(accounts)
+      .set({
+        phase: "FUNDED",
+        status: "FUNDED",
+        fundedAt: new Date(),
+        providerAccountId: provisioned.providerAccountId,
+        providerLogin: provisioned.providerLogin,
+      })
+      .where(eq(accounts.id, accountId));
   }
   revalidatePath("/admin");
   revalidatePath("/dashboard");

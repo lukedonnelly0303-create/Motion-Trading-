@@ -5,7 +5,7 @@ import { z } from "zod";
 import { authOptions } from "@/lib/auth";
 import { db, newId } from "@/db";
 import { accounts, payoutRequests } from "@/db/schema";
-import { tradingProvider } from "@/lib/propTechProvider";
+import { metricsStartDate, tradingProvider } from "@/lib/propTechProvider";
 import { isKycVerified } from "@/lib/provisioning";
 
 const Schema = z.object({ accountId: z.string() });
@@ -38,7 +38,7 @@ export async function POST(req: Request) {
     accountId: account.id,
     evaluationType: account.evaluationType,
     accountSize: account.accountSize,
-    createdAt: account.createdAt,
+    createdAt: metricsStartDate(account),
   });
 
   const profitCents = Math.max(0, Math.round((metrics.equity - account.accountSize) * 100));

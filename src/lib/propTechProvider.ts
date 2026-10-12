@@ -15,6 +15,10 @@
 
 import { RULES, type EvaluationType } from "@/lib/pricing";
 
+/** EVALUATION = the challenge account bought at checkout; FUNDED = the
+ * separate, fresh account a trader gets once they pass. */
+export type AccountStage = "EVALUATION" | "FUNDED";
+
 export interface ProvisionedAccount {
   providerAccountId: string;
   providerLogin: string;
@@ -35,6 +39,7 @@ export interface TradingProvider {
     accountId: string;
     evaluationType: EvaluationType;
     accountSize: number;
+    stage?: AccountStage; // defaults to EVALUATION
   }): Promise<ProvisionedAccount>;
 
   getMetrics(input: {
@@ -56,10 +61,11 @@ export interface TradingProvider {
  * is contracted. Replace with RemoteProvider (below) once you have one.
  */
 class MockProvider implements TradingProvider {
-  async provisionAccount({ accountId, accountSize }: { accountId: string; evaluationType: EvaluationType; accountSize: number }): Promise<ProvisionedAccount> {
+  async provisionAccount({ accountId, stage = "EVALUATION" }: { accountId: string; evaluationType: EvaluationType; accountSize: number; stage?: AccountStage }): Promise<ProvisionedAccount> {
+    const key = stage === "FUNDED" ? `${accountId}_funded` : accountId;
     return {
-      providerAccountId: `mock_${accountId}`,
-      providerLogin: `MT-${hashToDigits(accountId, 8)}`,
+      providerAccountId: `mock_${key}`,
+      providerLogin: `${stage === "FUNDED" ? "MTF" : "MT"}-${hashToDigits(key, 8)}`,
     };
   }
 
@@ -78,7 +84,9 @@ class MockProvider implements TradingProvider {
     // Seeded pseudo-random walk so the same account always returns a
     // consistent, slowly-improving curve rather than random noise on every load.
     const seed = hashToInt(accountId);
-    const wobble = seededSin(seed, daysElapsed);
+    // Ramp the wobble in over the first day so a brand-new account (or a
+    // freshly funded one) starts at its full starting balance, not +/-6%.
+    const wobble = seededSin(seed, daysElapsed) * Math.min(1, daysElapsed);
     const progressPct = clamp(daysElapsed * 3.4 + wobble * 6, 0, target * 1.15);
     const balance = accountSize * (1 + progressPct / 100);
     const equity = balance * (1 + seededSin(seed + 1, daysElapsed) * 0.004);
@@ -117,7 +125,7 @@ class RemoteProvider implements TradingProvider {
   private baseUrl = process.env.PROVIDER_API_BASE_URL ?? "";
   private apiKey = process.env.PROVIDER_API_KEY ?? "";
 
-  async provisionAccount(input: { accountId: string; evaluationType: EvaluationType; accountSize: number }): Promise<ProvisionedAccount> {
+  async provisionAccount(input: { accountId: string; evaluationType: EvaluationType; accountSize: number; stage?: AccountStage }): Promise<ProvisionedAccount> {
     const res = await fetch(`${this.baseUrl}/accounts`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${this.apiKey}` },
@@ -163,6 +171,15 @@ function buildProvider(): TradingProvider {
 }
 
 export const tradingProvider: TradingProvider = buildProvider();
+
+/**
+ * When the account's current stage began — the point metrics are measured
+ * from. A funded account starts over from its funding date, so profit made
+ * during the evaluation never carries over into payouts.
+ */
+export function metricsStartDate(account: { phase: string; createdAt: Date; fundedAt: Date | null }): Date {
+  return account.phase === "FUNDED" && account.fundedAt ? account.fundedAt : account.createdAt;
+}
 
 // ---- small deterministic-math helpers, no dependency needed ----
 function hashToInt(input: string): number {
