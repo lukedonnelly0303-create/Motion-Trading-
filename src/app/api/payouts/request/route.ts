@@ -6,12 +6,21 @@ import { authOptions } from "@/lib/auth";
 import { db, newId } from "@/db";
 import { accounts, payoutRequests } from "@/db/schema";
 import { tradingProvider } from "@/lib/propTechProvider";
+import { isKycVerified } from "@/lib/provisioning";
 
 const Schema = z.object({ accountId: z.string() });
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  // Identity must be verified before any payout can be requested.
+  if (!(await isKycVerified(session.user.id))) {
+    return NextResponse.json(
+      { error: "Verify your identity before requesting a payout. Upload your ID in Identity verification below." },
+      { status: 403 },
+    );
+  }
 
   const parsed = Schema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Invalid request" }, { status: 400 });

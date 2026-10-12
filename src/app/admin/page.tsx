@@ -138,12 +138,15 @@ export default async function AdminPage() {
                   <td className="mono">{formatUsd(p.amountCents)}</td>
                   <td><span className="badge warn">{p.status}</span></td>
                   <td style={{ display: "flex", gap: 8 }}>
-                    {p.status === "PENDING" && (
+                    {p.account.user.kycStatus !== "VERIFIED" && (
+                      <span className="badge bad" style={{ whiteSpace: "nowrap" }}>KYC not verified</span>
+                    )}
+                    {p.account.user.kycStatus === "VERIFIED" && p.status === "PENDING" && (
                       <form action={approvePayout.bind(null, p.id)}>
                         <button className="btn btn-primary" style={{ padding: "6px 14px", fontSize: 13 }}>Approve</button>
                       </form>
                     )}
-                    {p.status === "APPROVED" && (
+                    {p.account.user.kycStatus === "VERIFIED" && p.status === "APPROVED" && (
                       <form action={markPayoutPaid.bind(null, p.id)}>
                         <button className="btn btn-primary" style={{ padding: "6px 14px", fontSize: 13 }}>Mark paid</button>
                       </form>

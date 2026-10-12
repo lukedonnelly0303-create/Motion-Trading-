@@ -25,7 +25,7 @@ interface AccountProps {
   latestPayout: { status: string; amountCents: number } | null;
 }
 
-export default function AccountCard({ account }: { account: AccountProps }) {
+export default function AccountCard({ account, kycVerified }: { account: AccountProps; kycVerified: boolean }) {
   const [metrics, setMetrics] = useState<AccountMetrics | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [payoutMsg, setPayoutMsg] = useState<string | null>(null);
@@ -106,9 +106,14 @@ export default function AccountCard({ account }: { account: AccountProps }) {
 
       {account.status === "FUNDED" && (
         <div style={{ marginTop: 18, paddingTop: 16, borderTop: "1px solid var(--line)" }}>
-          <button className="btn btn-primary" onClick={requestPayout} disabled={requesting}>
+          <button className="btn btn-primary" onClick={requestPayout} disabled={requesting || !kycVerified}>
             {requesting ? "Requesting…" : "Request payout"}
           </button>
+          {!kycVerified && (
+            <p className="hint" style={{ marginTop: 8 }}>
+              Payouts unlock once your identity is verified. Upload your ID under Identity verification below.
+            </p>
+          )}
           {payoutMsg && <p className="hint" style={{ marginTop: 8 }}>{payoutMsg}</p>}
           {account.latestPayout && (
             <p className="hint" style={{ marginTop: 8 }}>
