@@ -72,6 +72,7 @@ export default async function DashboardPage() {
             {user.accounts.map((account) => (
               <AccountCard
                 key={account.id}
+                kycVerified={user.kycStatus === "VERIFIED"}
                 account={{
                   id: account.id,
                   evaluationType: account.evaluationType,

@@ -17,6 +17,18 @@ async function requireAdmin() {
   return session;
 }
 
+/** Payouts can only be approved or paid to traders whose KYC is verified. */
+async function requirePayoutOwnerKycVerified(payoutId: string) {
+  const payout = await db.query.payoutRequests.findFirst({
+    where: eq(payoutRequests.id, payoutId),
+    with: { account: { with: { user: true } } },
+  });
+  if (!payout) throw new Error("Payout not found");
+  if (payout.account.user.kycStatus !== "VERIFIED") {
+    throw new Error("Trader's identity is not verified");
+  }
+}
+
 export async function approveKyc(docId: string) {
   await requireAdmin();
   const [doc] = await db.select().from(kycDocuments).where(eq(kycDocuments.id, docId)).limit(1);
@@ -77,12 +89,14 @@ export async function resetAccount(accountId: string) {
 
 export async function approvePayout(payoutId: string) {
   await requireAdmin();
+  await requirePayoutOwnerKycVerified(payoutId);
   await db.update(payoutRequests).set({ status: "APPROVED" }).where(eq(payoutRequests.id, payoutId));
   revalidatePath("/admin");
 }
 
 export async function markPayoutPaid(payoutId: string) {
   await requireAdmin();
+  await requirePayoutOwnerKycVerified(payoutId);
   await db.update(payoutRequests).set({ status: "PAID", processedAt: new Date() }).where(eq(payoutRequests.id, payoutId));
   revalidatePath("/admin");
   revalidatePath("/dashboard");
