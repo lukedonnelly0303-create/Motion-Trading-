@@ -4,7 +4,7 @@ import { eq } from "drizzle-orm";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/db";
 import { accounts } from "@/db/schema";
-import { tradingProvider } from "@/lib/propTechProvider";
+import { metricsStartDate, tradingProvider } from "@/lib/propTechProvider";
 
 export async function GET(_req: Request, { params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions);
@@ -24,7 +24,7 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
     accountId: account.id,
     evaluationType: account.evaluationType,
     accountSize: account.accountSize,
-    createdAt: account.createdAt,
+    createdAt: metricsStartDate(account),
     phaseIndex: account.phase === "PHASE_2" ? 1 : 0,
   });
 

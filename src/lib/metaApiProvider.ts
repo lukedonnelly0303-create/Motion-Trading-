@@ -20,7 +20,7 @@
 
 import MetaApi from "metaapi.cloud-sdk";
 import { RULES, type EvaluationType } from "@/lib/pricing";
-import type { AccountMetrics, ProvisionedAccount, TradingProvider } from "@/lib/propTechProvider";
+import type { AccountMetrics, AccountStage, ProvisionedAccount, TradingProvider } from "@/lib/propTechProvider";
 
 const METAAPI_TOKEN = process.env.METAAPI_TOKEN ?? "";
 const METAAPI_ACCOUNT_ID = process.env.METAAPI_ACCOUNT_ID ?? "";
@@ -62,7 +62,7 @@ async function withAccountInformation<T>(
 }
 
 export class MetaApiProvider implements TradingProvider {
-  async provisionAccount({ accountId }: { accountId: string; evaluationType: EvaluationType; accountSize: number }): Promise<ProvisionedAccount> {
+  async provisionAccount({ accountId }: { accountId: string; evaluationType: EvaluationType; accountSize: number; stage?: AccountStage }): Promise<ProvisionedAccount> {
     // Every account provisioned in this mode points at the same single demo
     // MT4 account — see the scope note at the top of this file.
     return {
